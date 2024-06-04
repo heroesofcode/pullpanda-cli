@@ -2,6 +2,8 @@ import git
 import requests
 import os
 import json
+import time
+from collections import deque
 
 GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
 
@@ -24,77 +26,100 @@ def get_diff(repo_path):
     # Calculate the diff between the two branches
     diff = repo.git.diff(main_branch.commit, current_branch.commit)
 
-    # Send diff for code review to ChatGPT API
-    send_diff_for_code_review(diff)
+    # Split the diff into chunks of maximum 4 files
+    diff_chunks = [diff_chunk.strip() for diff_chunk in diff.split('diff --git')[1:]]
 
-def send_diff_for_code_review(diff):
+    # Queue for API calls
+    api_call_queue = deque()
+
+    # Iterate through diff chunks
+    for chunk in diff_chunks:
+        # Send diff for code review to ChatGPT API
+        api_call_queue.append(chunk)
+
+    # Process API calls from the queue
+    process_api_calls(api_call_queue)
+
+
+def process_api_calls(api_call_queue):
     """
-    Send the diff for code review to ChatGPT API.
+    Process API calls from the queue.
 
     Args:
-        diff (str): The diff text to be reviewed.
+        api_call_queue (deque): A deque containing diff chunks.
     """
+    # Markdown text variable
+    markdown_text = ""
+
     # API endpoint for ChatGPT
     api_endpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={}".format(GEMINI_AI_TOKEN)
 
-    # Prepare data for the API request
-    data = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": """Faça um code review focando dos diffs e siga esse exemplo: 
+    # Iterate through the API call queue
+    while api_call_queue:
+        # Pop the diff chunk from the queue
+        diff_chunk = api_call_queue.popleft()
 
-                            ## Rank: S (Atribua uma nota que vai de S a F, sendo o S o maior e o F o menor)
+        first_line = diff_chunk.split('\n')[0]
 
-                            ## Summary 
+        file_path = first_line.split(' ')[0][2:]
 
-                                * Criação da feature de login
-                                * Criação da feature de ajuda
-                                * Criação dos testes unitarios
+        print(f"\nReviewing: {file_path}")
 
-                            ## Code Review 
+        # Prepare data for the API request
+        data = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": """Give me suggestions for improvements to the code focusing only on the lines that were added to the code and give me exemple of suggestion code if is pertinent:
 
-                            **Diff:** /src/build.gradle.kts
+                            Follow this pattern to create the suggestion: 
 
-                            **Sugestão:** Escreva aqui a sugestao de alteração
+                            File: 
 
-                            **Codigo Formatado:** 
+                            Suggestion: 
 
-                            ```kotlin
-                                fun main() {
-                                    //exemplo codigo formatado sem elemento de diffs
-                                }
-                            ```
-                        """ + diff
-                    }
-                ]
-            }
-        ]
-    }
+                            Code example:
+                            """ + diff_chunk
+                        }
+                    ]
+                }
+            ]
+        }
 
-    # Send POST request to ChatGPT API
-    response = requests.post(api_endpoint, json=data)
+        # Send POST request to ChatGPT API
+        response = requests.post(api_endpoint, json=data)
 
-    if response.status_code == 200:
-        # Convert the JSON response to a Python dictionary
-        response_json = response.json()
+        if response.status_code == 200:
+            # Convert the JSON response to a Python dictionary
+            response_json = response.json()
 
-        # Check if 'text' is present in the response dictionary
-        if 'text' in response_json['candidates'][0]['content']['parts'][0]:
-            # Get the Markdown text from the response
-            markdown_text = response_json['candidates'][0]['content']['parts'][0]['text']
+            # Check if 'text' is present in the response dictionary
+            if 'text' in response_json['candidates'][0]['content']['parts'][0]:
+                # Get the Markdown text from the response
+                markdown_chunk = response_json['candidates'][0]['content']['parts'][0]['text']
 
-            # Replace backticks (`) with escape characters (\`)
-            markdown_text = markdown_text.replace("`", "\\`").replace("$", "\\$")
+                # Replace backticks (`) with escape characters (\`)
+                markdown_chunk = markdown_chunk.replace("$", "\\$")
 
-            # Generate HTML content
-            html_content = f"""<!DOCTYPE html>
+                # Append the Markdown text to the markdown variable
+                markdown_text += markdown_chunk + "\n\n"
+
+            else:
+                print("Unable to find the 'text' parameter in the JSON response.")
+        else:
+            print("Failed to send code review request. Error:", response.text)
+
+        # Wait for 10 seconds before the next API call
+        time.sleep(10)
+
+    # Generate HTML content
+    html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Render Markdown</title>
+  <title>Pull Panda</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body {{
@@ -123,44 +148,40 @@ def send_diff_for_code_review(diff):
 </head>
 <body>
   <img id="logo" src="../resources/pullpanda-logo.png" alt="Logo">
-  <div id="content"></div>
+  <div id="content">{markdown_text}</div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function() {{
-      const markdownText = `{markdown_text}`;
       const content = document.getElementById('content');
-      content.innerHTML = marked.parse(markdownText);
+      content.innerHTML = marked.parse(content.innerHTML);
     }});
   </script>
 </body>
 </html>"""
 
-            # Get the directory where the script is being executed
-            script_directory = os.path.dirname(os.path.abspath(__file__))
+    # Get the directory where the script is being executed
+    script_directory = os.path.dirname(os.path.abspath(__file__))
 
-            # Path to the folder where you want to save the file
-            save_directory = os.path.join(script_directory, "reports")
+    # Path to the folder where you want to save the file
+    save_directory = os.path.join(script_directory, "reports")
 
-            # Check if the save directory exists, if not, create it
-            if not os.path.exists(save_directory):
-                os.makedirs(save_directory)
+    # Check if the save directory exists, if not, create it
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
 
-            # Name of the file to be saved
-            file_name = "code_reviewed.html"
+    # Name of the file to be saved
+    file_name = "pullpanda_report.html"
 
-            # Full path to the file to be saved
-            file_path = os.path.join(save_directory, file_name)
+    # Full path to the file to be saved
+    file_path = os.path.join(save_directory, file_name)
 
-            # Save the HTML content to a file
-            with open(file_path, 'w', encoding='utf-8') as file:
-                file.write(html_content)
+    # Save the HTML content to a file
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(html_content)
 
-            # Print the path of the saved file for the user
-            print("The HTML file has been saved at:", file_path)
-        else:
-            print("Unable to find the 'text' parameter in the JSON response.")
-    else:
-        print("Failed to send code review request. Error:", response.text)
+    # Print the path of the saved file for the user
+    print("\nThe report file has been saved at: file://{}".format(file_path))
+
 
 if __name__ == "__main__":
 
