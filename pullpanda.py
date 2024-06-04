@@ -34,7 +34,7 @@ def get_diff(repo_path):
 
     # Iterate through diff chunks
     for chunk in diff_chunks:
-        # Send diff for code review to ChatGPT API
+        # Send diff for code review to Gemini API
         api_call_queue.append(chunk)
 
     # Process API calls from the queue
