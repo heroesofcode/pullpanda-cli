@@ -119,7 +119,7 @@ def process_api_calls(api_call_queue):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Render Markdown</title>
+  <title>Pull Panda</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body {{
