@@ -65,7 +65,7 @@ python pullpanda.py
 Upon successful execution, you will see a message indicating where the review report has been saved:
 
 ```bash
-The Markdown file has been saved at: /path/to/reports/pullpanda_report.html
+The report file has been saved at: /path/to/reports/pullpanda_report.html
 ```
 
 ## Customization
