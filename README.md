@@ -10,7 +10,7 @@ This tool automates the process of sending code diffs for review using the Gemin
 
 * **Send Diffs for Review:** Sends the calculated diffs to the Gemini API for a detailed code review.
   
-* **Save Review Reports:** Saves the review feedback in a Markdown file for easy reference and sharing.
+* **Save Review Reports:** Saves the review feedback in a HTML file for easy reference and sharing.
 
 ## Prerequisites
 
@@ -58,14 +58,14 @@ python pullpanda.py
 
 4. The diff will be sent to the Gemini API for review.
 
-5. The review feedback will be saved as a Markdown file in the **reports** directory within the script's directory.
+5. The review feedback will be saved as a HTML file in the **reports** directory within the script's directory.
 
 ## Example Output
 
 Upon successful execution, you will see a message indicating where the review report has been saved:
 
 ```bash
-The Markdown file has been saved at: /path/to/reports/code_reviewed.md
+The Markdown file has been saved at: /path/to/reports/pullpanda_report.html
 ```
 
 ## Customization

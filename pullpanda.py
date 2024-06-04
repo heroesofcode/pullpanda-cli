@@ -170,7 +170,7 @@ def process_api_calls(api_call_queue):
         os.makedirs(save_directory)
 
     # Name of the file to be saved
-    file_name = "code_reviewed.html"
+    file_name = "pullpanda_report.html"
 
     # Full path to the file to be saved
     file_path = os.path.join(save_directory, file_name)
