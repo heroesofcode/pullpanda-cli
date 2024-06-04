@@ -2,7 +2,6 @@ import git
 import requests
 import os
 import json
-import textwrap
 import time
 from collections import deque
 
@@ -35,11 +34,8 @@ def get_diff(repo_path):
 
     # Iterate through diff chunks
     for chunk in diff_chunks:
-        # Indent the diff before sending
-        indented_diff = textwrap.indent(chunk, "    ")  # Indent with four spaces
-
         # Send diff for code review to ChatGPT API
-        api_call_queue.append(indented_diff)
+        api_call_queue.append(chunk)
 
     # Process API calls from the queue
     process_api_calls(api_call_queue)
@@ -63,22 +59,33 @@ def process_api_calls(api_call_queue):
         # Pop the diff chunk from the queue
         diff_chunk = api_call_queue.popleft()
 
+        first_line = diff_chunk.split('\n')[0]
+
+        file_path = first_line.split(' ')[0][2:]
+
+        print(f"\nReviewing: {file_path}")
+
         # Prepare data for the API request
         data = {
             "contents": [
                 {
                     "parts": [
                         {
-                            "text": """
-                              Give me suggestions for improvements to the code focusing only on the lines that were added to the code and give me exemple of suggestion code if is pertinent
+                            "text": """Give me suggestions for improvements to the code focusing only on the lines that were added to the code and give me exemple of suggestion code if is pertinent:
+
+                            Follow this pattern to create the suggestion: 
+
+                            File: 
+
+                            Suggestion: 
+
+                            Code example:
                             """ + diff_chunk
                         }
                     ]
                 }
             ]
         }
-
-        print(json.dumps(data, indent=4))
 
         # Send POST request to ChatGPT API
         response = requests.post(api_endpoint, json=data)
@@ -93,7 +100,7 @@ def process_api_calls(api_call_queue):
                 markdown_chunk = response_json['candidates'][0]['content']['parts'][0]['text']
 
                 # Replace backticks (`) with escape characters (\`)
-                markdown_chunk = markdown_chunk.replace("`", "\\`").replace("$", "\\$")
+                markdown_chunk = markdown_chunk.replace("$", "\\$")
 
                 # Append the Markdown text to the markdown variable
                 markdown_text += markdown_chunk + "\n\n"
@@ -173,7 +180,7 @@ def process_api_calls(api_call_queue):
         file.write(html_content)
 
     # Print the path of the saved file for the user
-    print("The HTML file has been saved at:", file_path)
+    print("\nThe report file has been saved at: file://{}".format(file_path))
 
 
 if __name__ == "__main__":
