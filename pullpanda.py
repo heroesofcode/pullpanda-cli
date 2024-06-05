@@ -7,6 +7,8 @@ from collections import deque
 
 GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
 
+CONFIG_FILE = "config.txt"
+
 def get_diff(repo_path):
     """
     Calculate and print the differences (diff) between the current branch and the main branch of a Git repository.
@@ -245,8 +247,31 @@ if __name__ == "__main__":
     """
     )
 
+    def get_repo_path():
+      # Check if the config file exists
+      if os.path.exists(CONFIG_FILE):
+          with open(CONFIG_FILE, "r") as file:
+              saved_path = file.readline().strip()
+              if saved_path:
+                  # Ask the user if they want to use the saved path
+                  user_input = input(f"Use the saved path '{saved_path}'? (Press Enter to accept or type a new path): ").strip()
+                  if user_input:
+                      repo_path = user_input
+                  else:
+                      repo_path = saved_path
+              else:
+                  repo_path = input("Please enter the path to your Git repository: ").strip()
+      else:
+          repo_path = input("Please enter the path to your Git repository: ").strip()
+
+      # Save the new path (if it was changed or entered for the first time)
+      with open(CONFIG_FILE, "w") as file:
+          file.write(repo_path)
+
+      return repo_path
+
     # Request the repository path from the user
-    repo_path = input("Please enter the path to your Git repository: ")
+    repo_path = get_repo_path()
 
     # Calculate and get the diff between the target and current branches
     get_diff(repo_path)
