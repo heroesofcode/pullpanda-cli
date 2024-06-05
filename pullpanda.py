@@ -6,7 +6,7 @@ import time
 import webbrowser
 from collections import deque
 
-GEMINI_AI_TOKEN = ""
+GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
 
 CONFIG_FILE = "config.txt"
 
@@ -23,8 +23,14 @@ def get_diff(repo_path):
     # Access the current branch
     current_branch = repo.active_branch
 
+    # Access the remote repository (origin)
+    origin = repo.remotes.origin
+
+    # Update the references from the remote repository
+    origin.fetch()
+
     # Access the main branch
-    main_branch = repo.heads['develop']  # Assuming 'develop' as the main branch, modify as needed
+    main_branch = repo.refs['develop']  # Assuming 'develop' as the main branch, modify as needed
 
     # Calculate the diff between the two branches
     diff = repo.git.diff(main_branch.commit, current_branch.commit)
