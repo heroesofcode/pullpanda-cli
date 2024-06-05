@@ -2,7 +2,7 @@
 
 # Pull Panda
 
-This tool automates the process of sending code diffs for review using the Gemini API. It helps developers streamline their code review process by generating detailed feedback and suggestions for improvement.
+This tool automates the process of code review using the Gemini API. It helps developers streamline their code review process by generating detailed feedback and suggestions for improvement.
 
 ## Features
 
