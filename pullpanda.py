@@ -6,8 +6,6 @@ import time
 import webbrowser
 from collections import deque
 
-GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
-
 CONFIG_FILE = "config.txt"
 
 YELLOW = '\033[33m'
@@ -36,7 +34,7 @@ def get_diff(repo_path):
     origin.fetch()
 
     # Access the main branch
-    main_branch = repo.refs['develop']  # Assuming 'develop' as the main branch, modify as needed
+    main_branch = repo.refs[target_branch]  # Assuming 'develop' as the main branch, modify as needed
 
     # Calculate the diff between the two branches
     diff = repo.git.diff(main_branch.commit, current_branch.commit)
@@ -67,7 +65,7 @@ def process_api_calls(api_call_queue):
     markdown_text = ""
 
     # API endpoint for ChatGPT
-    api_endpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={}".format(GEMINI_AI_TOKEN)
+    api_endpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={}".format(token)
 
     # Iterate through the API call queue
     while api_call_queue:
@@ -262,32 +260,50 @@ if __name__ == "__main__":
     """
     )
 
-    def get_repo_path():
-      # Check if the config file exists
+    def get_config_value(prompt, key):
+      config = {}
+
+      # Check if the config file exists and read it
       if os.path.exists(CONFIG_FILE):
           with open(CONFIG_FILE, "r") as file:
-              saved_path = file.readline().strip()
-              if saved_path:
-                  # Ask the user if they want to use the saved path
-                  user_input = input(f"{YELLOW}Use the saved path '{saved_path}'? (Press Enter to accept or type a new path): ").strip()
-                  if user_input:
-                      repo_path = user_input
-                  else:
-                      repo_path = saved_path
-              else:
-                  repo_path = input(f"{YELLOW}Please enter the path to your local repository: ").strip()
+              for line in file:
+                  k, v = line.strip().split('=', 1)
+                  config[k] = v
+
+      # Get the saved value if it exists
+      saved_value = config.get(key, '')
+
+      # Ask the user for the value, using the saved value as default
+      if saved_value:
+          user_input = input(f"{YELLOW}{prompt} (Press Enter to accept the saved value '{saved_value}' or type a new one): ").strip()
+          if user_input:
+              config[key] = user_input
+          else:
+              config[key] = saved_value
       else:
-          repo_path = input(f"{YELLOW}Please enter the path to your local repository: ").strip()
+          config[key] = input(f"{YELLOW}{prompt}: ").strip()
 
-      # Save the new path (if it was changed or entered for the first time)
+      # Save the new value (if it was changed or entered for the first time)
       with open(CONFIG_FILE, "w") as file:
-          file.write(repo_path)
+          for k, v in config.items():
+              file.write(f"{k}={v}\n")
 
-      return repo_path
+      return config[key]
 
+    def get_repo_path():
+        return get_config_value("\nEnter the path to your local repository", 'repo_path')
+
+    def get_token():
+        return get_config_value("\nEnter the Gemini Api Token", 'token')
+    
+    def get_target_branch_name(): 
+        return get_config_value("\nEnter the target branch name", 'target_branch')
+    
     try: 
       # Request the repository path from the user
       repo_path = get_repo_path()
+      target_branch = get_target_branch_name()
+      token = get_token()
 
       # Calculate and get the diff between the target and current branches
       get_diff(repo_path)
