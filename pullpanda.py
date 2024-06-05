@@ -5,7 +5,7 @@ import json
 import time
 from collections import deque
 
-GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
+GEMINI_AI_TOKEN = ""
 
 CONFIG_FILE = "config.txt"
 
@@ -260,9 +260,9 @@ if __name__ == "__main__":
                   else:
                       repo_path = saved_path
               else:
-                  repo_path = input("Please enter the path to your Git repository: ").strip()
+                  repo_path = input("Please enter the path to your local repository: ").strip()
       else:
-          repo_path = input("Please enter the path to your Git repository: ").strip()
+          repo_path = input("Please enter the path to your local repository: ").strip()
 
       # Save the new path (if it was changed or entered for the first time)
       with open(CONFIG_FILE, "w") as file:
