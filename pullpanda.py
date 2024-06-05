@@ -3,9 +3,10 @@ import requests
 import os
 import json
 import time
+import webbrowser
 from collections import deque
 
-GEMINI_AI_TOKEN = ""
+GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
 
 CONFIG_FILE = "config.txt"
 
@@ -183,6 +184,8 @@ def process_api_calls(api_call_queue):
 
     # Print the path of the saved file for the user
     print("\nThe report file has been saved at: file://{}".format(file_path))
+
+    webbrowser.open('file://' + os.path.realpath(file_path))
 
 
 if __name__ == "__main__":
