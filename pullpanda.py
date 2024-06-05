@@ -6,7 +6,7 @@ import time
 import webbrowser
 from collections import deque
 
-GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
+GEMINI_AI_TOKEN = ""
 
 CONFIG_FILE = "config.txt"
 
