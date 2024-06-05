@@ -10,6 +10,12 @@ GEMINI_AI_TOKEN = "AIzaSyA3Ilt0P2jPuADTcIWzUvIKxZC6-P9jS6Q"
 
 CONFIG_FILE = "config.txt"
 
+YELLOW = '\033[33m'
+RED = '\033[31m'
+GREEN = '\033[32m'
+BLUE = '\033[34m'
+RESET = '\033[0m'
+
 def get_diff(repo_path):
     """
     Calculate and print the differences (diff) between the current branch and the main branch of a Git repository.
@@ -72,7 +78,7 @@ def process_api_calls(api_call_queue):
 
         file_path = first_line.split(' ')[0][2:]
 
-        print(f"\nReviewing: {file_path}")
+        print(f"\n{BLUE}Reviewing: {RESET}{file_path}")
 
         # Prepare data for the API request
         data = {
@@ -115,9 +121,9 @@ def process_api_calls(api_call_queue):
                 markdown_text += markdown_chunk + "\n\n"
 
             else:
-                print("Unable to find the 'text' parameter in the JSON response.")
+                print(f"{RED}Unable to find the 'text' parameter in the JSON response.")
         else:
-            print("Failed to send code review request. Error:", response.text)
+            print(f"{RED}Failed to send code review request.")
 
         # Wait for 10 seconds before the next API call
         time.sleep(10)
@@ -189,7 +195,7 @@ def process_api_calls(api_call_queue):
         file.write(html_content)
 
     # Print the path of the saved file for the user
-    print("\nThe report file has been saved at: file://{}".format(file_path))
+    print("\n{}The report file has been saved at: file://{}".format(GREEN, file_path))
 
     webbrowser.open('file://' + os.path.realpath(file_path))
 
@@ -263,15 +269,15 @@ if __name__ == "__main__":
               saved_path = file.readline().strip()
               if saved_path:
                   # Ask the user if they want to use the saved path
-                  user_input = input(f"Use the saved path '{saved_path}'? (Press Enter to accept or type a new path): ").strip()
+                  user_input = input(f"{YELLOW}Use the saved path '{saved_path}'? (Press Enter to accept or type a new path): ").strip()
                   if user_input:
                       repo_path = user_input
                   else:
                       repo_path = saved_path
               else:
-                  repo_path = input("Please enter the path to your local repository: ").strip()
+                  repo_path = input(f"{YELLOW}Please enter the path to your local repository: ").strip()
       else:
-          repo_path = input("Please enter the path to your local repository: ").strip()
+          repo_path = input(f"{YELLOW}Please enter the path to your local repository: ").strip()
 
       # Save the new path (if it was changed or entered for the first time)
       with open(CONFIG_FILE, "w") as file:
@@ -279,8 +285,11 @@ if __name__ == "__main__":
 
       return repo_path
 
-    # Request the repository path from the user
-    repo_path = get_repo_path()
+    try: 
+      # Request the repository path from the user
+      repo_path = get_repo_path()
 
-    # Calculate and get the diff between the target and current branches
-    get_diff(repo_path)
+      # Calculate and get the diff between the target and current branches
+      get_diff(repo_path)
+    except KeyboardInterrupt:
+      print("\nExiting from script...")
